@@ -1,20 +1,25 @@
-import React, { JSX } from 'react';
-import { useFormik, FormikHelpers } from 'formik';
+// Actualizamos el componente RegisterPage
+import React, { use, useEffect } from 'react';
+import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
 
-interface RegisterFormValues {
+import { useApi } from '../hooks/useApi';
+import { useAuthStore } from '@/store/useAuthStore';
+
+interface SignInFormValues {
 	email: string;
 	password: string;
 }
 
-export default function SignInPage(): JSX.Element {
+export default function SignInPage(): React.JSX.Element {
 	const navigate = useNavigate();
-
-	const formik = useFormik<RegisterFormValues>({
+	const { login } = useApi();
+	const user = useAuthStore((state) => state.user);
+	const formik = useFormik<SignInFormValues>({
 		initialValues: {
-			email: '',
-			password: '',
+			email: 'alexis123@gmail.com',
+			password: 'alexis123',
 		},
 		validationSchema: Yup.object({
 			email: Yup.string().email('Email inválido').required('Email requerido'),
@@ -22,14 +27,19 @@ export default function SignInPage(): JSX.Element {
 				.min(6, 'Mínimo 6 caracteres')
 				.required('Contraseña requerida'),
 		}),
-		onSubmit: (
-			values: RegisterFormValues,
-			{ resetForm }: FormikHelpers<RegisterFormValues>
-		) => {
-			console.log(values);
+		onSubmit: async (values, { resetForm }) => {
+			try {
+				await login(values.email, values.password);
+				navigate('/inicio');
+			} catch (error: any) {
+				console.error('Login error:', error.response?.data || error.message);
+			}
 			resetForm();
 		},
 	});
+	useEffect(() => {
+		navigate('/inicio');
+	}, [user]);
 	const bg = 'https://thebarbeer.co/wp-content/uploads/2018/05/barberia_06.jpg';
 	return (
 		<div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
@@ -43,7 +53,7 @@ export default function SignInPage(): JSX.Element {
 					className="w-full max-w-xl space-y-8">
 					<div className="text-center">
 						<h2 className="text-5xl font-black bg-gradient-to-r from-black to-gray-700 text-transparent bg-clip-text">
-							Inicia Sesión
+							Registro
 						</h2>
 						<p className="text-gray-600 mt-2 text-base">
 							Sé parte de la experiencia de nuestra barbería profesional
@@ -93,7 +103,7 @@ export default function SignInPage(): JSX.Element {
 					<button
 						type="submit"
 						className="w-full py-3 bg-gradient-to-r from-black via-neutral-800 to-gray-700 text-white font-semibold rounded-lg shadow-lg hover:brightness-110 transition duration-300">
-						Entrar
+						Crear cuenta
 					</button>
 
 					<div className="text-center">

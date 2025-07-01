@@ -1,7 +1,10 @@
-import React, { JSX } from 'react';
+import React, { useEffect } from 'react';
 import { useFormik, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
+
+import { useApi } from '../hooks/useApi';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface RegisterFormValues {
 	name: string;
@@ -10,8 +13,10 @@ interface RegisterFormValues {
 	gender: string;
 }
 
-export default function RegisterPage(): JSX.Element {
+export default function RegisterPage(): React.JSX.Element {
 	const navigate = useNavigate();
+	const { register } = useApi();
+	const user = useAuthStore((state) => state.user);
 	const formik = useFormik<RegisterFormValues>({
 		initialValues: {
 			name: '',
@@ -27,14 +32,19 @@ export default function RegisterPage(): JSX.Element {
 				.required('Contraseña requerida'),
 			gender: Yup.string().required('Selecciona el género'),
 		}),
-		onSubmit: (
-			values: RegisterFormValues,
-			{ resetForm }: FormikHelpers<RegisterFormValues>
-		) => {
-			console.log(values);
+		onSubmit: async (values, { resetForm }) => {
+			try {
+				await register(values);
+				navigate('/login');
+			} catch (error: any) {
+				console.error('Register error:', error.response?.data || error.message);
+			}
 			resetForm();
 		},
 	});
+	useEffect(() => {
+		navigate('/inicio');
+	}, [user]);
 	const bg = 'https://thebarbeer.co/wp-content/uploads/2018/05/barberia_06.jpg';
 	return (
 		<div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
@@ -42,12 +52,12 @@ export default function RegisterPage(): JSX.Element {
 				className="hidden lg:block bg-cover bg-center"
 				style={{ backgroundImage: `url(${bg})` }}></div>
 
-			<div className="flex items-center justify-center bg-gradient-to-br from-white via-neutral-100 to-gray-200 px-6 py-12">
+			<div className="flex flex-col items-center justify-center bg-gradient-to-br from-white via-neutral-100 to-gray-200 px-6 py-12">
 				<form
 					onSubmit={formik.handleSubmit}
 					className="w-full max-w-xl space-y-8">
 					<div className="text-center">
-						<h2 className="text-5xl font-black text-black bg-clip-text">
+						<h2 className="text-5xl font-black bg-gradient-to-r from-black to-gray-700 text-transparent bg-clip-text">
 							Registro
 						</h2>
 						<p className="text-gray-600 mt-2 text-base">
@@ -137,9 +147,10 @@ export default function RegisterPage(): JSX.Element {
 
 					<button
 						type="submit"
-						className="w-full py-3 bg-gradient-to-r from-neutral-700 via-neutral-700 to-gray-700 text-white font-semibold rounded-lg shadow-lg hover:brightness-110 transition duration-300">
+						className="w-full py-3 bg-gradient-to-r from-black via-neutral-800 to-gray-700 text-white font-semibold rounded-lg shadow-lg hover:brightness-110 transition duration-300">
 						Crear cuenta
 					</button>
+
 					<div className="text-center">
 						<button
 							type="button"
