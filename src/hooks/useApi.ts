@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 const api = axios.create({
-	baseURL: 'http://localhost:4000',
+	baseURL: 'https://webbarber-backend.onrender.com',
 	headers: {
 		'Content-Type': 'application/json',
 	},
