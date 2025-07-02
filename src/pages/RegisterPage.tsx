@@ -35,16 +35,14 @@ export default function RegisterPage(): React.JSX.Element {
 		onSubmit: async (values, { resetForm }) => {
 			try {
 				await register(values);
-				navigate('/login');
+				navigate('/');
 			} catch (error: any) {
 				console.error('Register error:', error.response?.data || error.message);
 			}
 			resetForm();
 		},
 	});
-	useEffect(() => {
-		navigate('/inicio');
-	}, [user]);
+
 	const bg = 'https://thebarbeer.co/wp-content/uploads/2018/05/barberia_06.jpg';
 	return (
 		<div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">

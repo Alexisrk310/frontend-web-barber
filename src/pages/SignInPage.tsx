@@ -15,7 +15,7 @@ interface SignInFormValues {
 export default function SignInPage(): React.JSX.Element {
 	const navigate = useNavigate();
 	const { login } = useApi();
-	const user = useAuthStore((state) => state.user);
+	const token = useAuthStore((state) => state.token);
 	const formik = useFormik<SignInFormValues>({
 		initialValues: {
 			email: 'alexis123@gmail.com',
@@ -37,9 +37,7 @@ export default function SignInPage(): React.JSX.Element {
 			resetForm();
 		},
 	});
-	useEffect(() => {
-		navigate('/inicio');
-	}, [user]);
+
 	const bg = 'https://thebarbeer.co/wp-content/uploads/2018/05/barberia_06.jpg';
 	return (
 		<div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
@@ -53,7 +51,7 @@ export default function SignInPage(): React.JSX.Element {
 					className="w-full max-w-xl space-y-8">
 					<div className="text-center">
 						<h2 className="text-5xl font-black bg-gradient-to-r from-black to-gray-700 text-transparent bg-clip-text">
-							Registro
+							Inicia sesión
 						</h2>
 						<p className="text-gray-600 mt-2 text-base">
 							Sé parte de la experiencia de nuestra barbería profesional
@@ -103,7 +101,7 @@ export default function SignInPage(): React.JSX.Element {
 					<button
 						type="submit"
 						className="w-full py-3 bg-gradient-to-r from-black via-neutral-800 to-gray-700 text-white font-semibold rounded-lg shadow-lg hover:brightness-110 transition duration-300">
-						Crear cuenta
+						Entrar
 					</button>
 
 					<div className="text-center">
