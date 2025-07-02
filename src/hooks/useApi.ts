@@ -14,8 +14,9 @@ export const useApi = () => {
 	console.log('Token desde useApi:', token);
 	const login = async (email: string, password: string) => {
 		const response = await api.post('/auth/login', { email, password });
-
 		// Guardar en la store de Zustand
+		// Guardar en la store de Zustand
+
 		setAuth(response.data.user, response.data.token);
 
 		return response.data;
