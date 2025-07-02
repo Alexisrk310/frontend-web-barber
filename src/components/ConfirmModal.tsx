@@ -1,15 +1,6 @@
 import React from 'react';
 import { XIcon } from 'lucide-react';
-
-interface ConfirmModalProps {
-	title: string;
-	description?: string;
-	isOpen: boolean;
-	onCancel: () => void;
-	onConfirm: () => void;
-	confirmText?: string;
-	cancelText?: string;
-}
+import { ConfirmModalProps } from '@/interfaces/modal.Interface';
 
 export default function ConfirmModal({
 	title,

@@ -16,7 +16,7 @@ interface RegisterFormValues {
 export default function RegisterPage(): React.JSX.Element {
 	const navigate = useNavigate();
 	const { register } = useApi();
-	const user = useAuthStore((state) => state.user);
+	const token = useAuthStore((state) => state.token);
 	const formik = useFormik<RegisterFormValues>({
 		initialValues: {
 			name: '',
