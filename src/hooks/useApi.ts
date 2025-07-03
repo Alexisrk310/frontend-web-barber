@@ -119,7 +119,7 @@ export const useApi = () => {
 		return response.data;
 	};
 	const loginWithGoogle = async (tokenGoogle: string) => {
-		const response = await api.post('/google-login', {
+		const response = await api.post('/auth/google-login', {
 			token: tokenGoogle,
 		});
 
