@@ -1,5 +1,4 @@
 // components/AgendaModal.tsx
-import React from 'react';
 import { DayPicker } from 'react-day-picker';
 import { AlertCircleIcon, XIcon } from 'lucide-react';
 import { format } from 'date-fns';
@@ -55,7 +54,8 @@ export default function AgendaModal({
 									setDateTouched(true);
 								}}
 								locale={es}
-								fromDate={new Date()}
+								hidden={{ before: new Date(new Date().setHours(0, 0, 0, 0)) }}
+								startMonth={new Date()} // 👈 Bloquea la navegación hacia atrás
 								modifiersClassNames={{
 									selected: 'bg-black text-white',
 									today: 'border border-black',
@@ -95,15 +95,39 @@ export default function AgendaModal({
 								!dateTime ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''
 							}`}>
 							<option value="">Hora</option>
-							{Array.from({ length: 10 }, (_, i) => i + 8).map((hour) => {
-								const time = `${hour.toString().padStart(2, '0')}:00`;
-								return (
-									<option key={time} value={time}>
-										{time}
-									</option>
-								);
-							})}
+							{(() => {
+								if (!dateTime) return null;
+
+								const hours = [];
+								const now = new Date();
+								const selectedDate = dateTime;
+								const isToday =
+									selectedDate.toDateString() === now.toDateString();
+
+								const currentHour = now.getHours();
+								const startHour = isToday ? Math.max(currentHour + 1, 8) : 8;
+
+								for (let hour = startHour; hour <= 17; hour++) {
+									const time = `${hour.toString().padStart(2, '0')}:00`;
+									hours.push(
+										<option key={time} value={time}>
+											{time}
+										</option>
+									);
+								}
+
+								if (hours.length === 0) {
+									return (
+										<option value="" disabled>
+											No hay horas disponibles para hoy
+										</option>
+									);
+								}
+
+								return hours;
+							})()}
 						</select>
+
 						{hourError && (
 							<p className="text-red-500 text-sm mt-1 flex items-center gap-1">
 								<AlertCircleIcon className="w-4 h-4" /> Hora requerida

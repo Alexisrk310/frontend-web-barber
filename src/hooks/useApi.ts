@@ -118,6 +118,14 @@ export const useApi = () => {
 		);
 		return response.data;
 	};
+	const loginWithGoogle = async (tokenGoogle: string) => {
+		const response = await api.post('/auth/google/callback', {
+			token: tokenGoogle,
+		});
+
+		setAuth(response.data.user, response.data.token);
+		return response.data;
+	};
 
 	return {
 		login,
@@ -127,5 +135,6 @@ export const useApi = () => {
 		getAppointments,
 		updateOwnAppointment,
 		adminUpdateAppointment,
+		loginWithGoogle,
 	};
 };

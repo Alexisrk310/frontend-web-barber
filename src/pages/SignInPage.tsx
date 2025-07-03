@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
 import { useAuthStore } from '@/store/useAuthStore';
 import Notification from '@/components/Notification';
+import { GoogleLogin } from '@react-oauth/google';
 
 interface SignInFormValues {
 	email: string;
@@ -13,7 +14,7 @@ interface SignInFormValues {
 
 export default function SignInPage(): React.JSX.Element {
 	const navigate = useNavigate();
-	const { login } = useApi();
+	const { login, loginWithGoogle } = useApi();
 	const [toast, setToast] = useState<{
 		message: string;
 		type: 'success' | 'error' | 'info' | 'warning';
@@ -129,6 +130,36 @@ export default function SignInPage(): React.JSX.Element {
 							className="w-full py-3 bg-gradient-to-r from-black via-neutral-800 to-gray-700 text-white font-semibold rounded-lg shadow-lg hover:brightness-110 transition duration-300">
 							Entrar
 						</button>
+						<GoogleLogin
+							onSuccess={async (credentialResponse) => {
+								try {
+									setToast({
+										message: 'Verificando con Google...',
+										type: 'info',
+									});
+
+									await loginWithGoogle(credentialResponse.credential!);
+
+									setToast({
+										message: 'Inicio de sesión exitoso',
+										type: 'success',
+									});
+									setTimeout(() => {
+										navigate('/inicio');
+									}, 1500);
+								} catch (error: any) {
+									const backendMsg =
+										error.response?.data?.msg || 'Error al iniciar con Google';
+									setToast({ message: backendMsg, type: 'error' });
+								}
+							}}
+							onError={() => {
+								setToast({
+									message: 'Error al autenticar con Google',
+									type: 'error',
+								});
+							}}
+						/>
 
 						<div className="text-center">
 							<button

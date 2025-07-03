@@ -122,14 +122,12 @@ export default function AgendasPage(): React.JSX.Element {
 			if (!isValidDate || !isValidHour || !values.gender || !values.service)
 				return;
 
-			const formattedDate = format(dateTime, 'dd/MM/yyyy HH:mm');
-
 			try {
 				if (editingAgenda) {
 					setToast({ message: 'Editando agenda...', type: 'info' });
 					const updated = await updateOwnAppointment(editingAgenda.id, {
 						...values,
-						dateTime: formattedDate as unknown as Date,
+						dateTime: dateTime!, // ✅ Usa el objeto Date directamente
 					});
 					setAgendas((prev) =>
 						prev.map((item) =>
@@ -144,7 +142,7 @@ export default function AgendasPage(): React.JSX.Element {
 					setToast({ message: 'Creando agenda...', type: 'info' });
 					const created = await createAppointment({
 						...values,
-						dateTime: formattedDate as unknown as Date,
+						dateTime: dateTime!, // ✅ Usa el objeto Date directamente
 					});
 					setAgendas((prev) => [created.appointment, ...prev]);
 					setToast({

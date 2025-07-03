@@ -14,7 +14,7 @@ export default function ConfirmModal({
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center px-4">
+		<div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm flex items-center justify-center px-4">
 			<div className="bg-white max-w-md w-full rounded-xl shadow-lg p-6 relative">
 				<button
 					onClick={onCancel}
