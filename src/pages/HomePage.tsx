@@ -68,14 +68,17 @@ export default function AgendasPage(): React.JSX.Element {
 		if (selectedIdToDelete !== null) {
 			setToast({ message: 'Eliminando...', type: 'info' });
 			try {
-				await deleteOwnAppointment(selectedIdToDelete);
+				const res = await deleteOwnAppointment(selectedIdToDelete);
 				setAgendas((prev) =>
 					prev.filter((agenda) => agenda.id !== selectedIdToDelete)
 				);
-				setToast({ message: 'Agenda eliminada', type: 'success' });
+				setToast({
+					message: res?.message || 'Agenda eliminada',
+					type: 'success',
+				});
 			} catch (err: any) {
 				setToast({
-					message: err.response?.data?.msg || 'Error al eliminar agenda',
+					message: err.response?.data?.message || 'Error al eliminar agenda',
 					type: 'error',
 				});
 			} finally {
@@ -133,7 +136,10 @@ export default function AgendasPage(): React.JSX.Element {
 							item.id === editingAgenda.id ? updated.appointment : item
 						)
 					);
-					setToast({ message: 'Agenda actualizada', type: 'success' });
+					setToast({
+						message: updated?.message || 'Agenda actualizada',
+						type: 'success',
+					});
 				} else {
 					setToast({ message: 'Creando agenda...', type: 'info' });
 					const created = await createAppointment({
@@ -141,12 +147,15 @@ export default function AgendasPage(): React.JSX.Element {
 						dateTime: formattedDate as unknown as Date,
 					});
 					setAgendas((prev) => [created.appointment, ...prev]);
-					setToast({ message: 'Agenda creada con éxito', type: 'success' });
+					setToast({
+						message: created?.message || 'Agenda creada con éxito',
+						type: 'success',
+					});
 				}
 				resetModal();
 			} catch (err: any) {
 				setToast({
-					message: err.response?.data?.msg || 'Error al guardar agenda',
+					message: err.response?.data?.message || 'Error al guardar agenda',
 					type: 'error',
 				});
 			}

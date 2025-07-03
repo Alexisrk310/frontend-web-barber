@@ -28,7 +28,7 @@ export default function AgendaModal({
 		}`;
 
 	return (
-		<div className="fixed inset-0 z-50 bg-black/10 backdrop-blur-sm flex justify-center items-center px-4">
+		<div className="fixed inset-0 z-40 bg-black/10 backdrop-blur-sm flex justify-center items-center px-4">
 			<div className="bg-white w-full max-w-lg rounded-2xl p-8 relative shadow-xl max-h-[95vh] overflow-y-auto">
 				<button
 					onClick={onClose}
