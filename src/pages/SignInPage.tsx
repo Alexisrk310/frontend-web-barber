@@ -124,7 +124,7 @@ export default function SignInPage(): React.JSX.Element {
 								)}
 							</div>
 						</div>
-						<div className="*:my-4">
+						<div className="flex flex-col items-center space-y-4">
 							<button
 								type="submit"
 								className="w-full py-3 bg-gradient-to-r from-black via-neutral-800 to-gray-700 text-white font-semibold rounded-lg shadow-lg hover:brightness-110 transition duration-300">
