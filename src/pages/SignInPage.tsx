@@ -132,30 +132,27 @@ export default function SignInPage(): React.JSX.Element {
 						</button>
 						<GoogleLogin
 							onSuccess={async (credentialResponse) => {
+								if (!credentialResponse.credential) return;
+
 								try {
+									await loginWithGoogle(credentialResponse.credential);
 									setToast({
-										message: 'Verificando con Google...',
-										type: 'info',
-									});
-
-									await loginWithGoogle(credentialResponse.credential!);
-
-									setToast({
-										message: 'Inicio de sesión exitoso',
+										message: 'Inicio de sesión con Google exitoso',
 										type: 'success',
 									});
-									setTimeout(() => {
-										navigate('/inicio');
-									}, 1500);
+									setTimeout(() => navigate('/inicio'), 1500);
 								} catch (error: any) {
-									const backendMsg =
-										error.response?.data?.msg || 'Error al iniciar con Google';
-									setToast({ message: backendMsg, type: 'error' });
+									setToast({
+										message:
+											error?.response?.data?.msg ||
+											'Error al iniciar sesión con Google',
+										type: 'error',
+									});
 								}
 							}}
 							onError={() => {
 								setToast({
-									message: 'Error al autenticar con Google',
+									message: 'Error al iniciar sesión con Google',
 									type: 'error',
 								});
 							}}
