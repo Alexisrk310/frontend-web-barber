@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-
 import { PlusCircleIcon, ScissorsIcon, LogOut } from 'lucide-react';
 import 'react-day-picker/dist/style.css';
 import { useApi } from '../hooks/useApi';
@@ -21,9 +20,11 @@ export default function AgendasPage(): React.JSX.Element {
 	const [dateTouched, setDateTouched] = useState(false);
 	const [hourTouched, setHourTouched] = useState(false);
 	const [loading, setLoading] = useState(true);
-	const [showNotification, setShowNotification] = useState(false);
+	const [toast, setToast] = useState<{
+		message: string;
+		type: 'success' | 'error' | 'info';
+	} | null>(null);
 	const [editingAgenda, setEditingAgenda] = useState<Agenda | null>(null);
-
 	const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 	const [confirmLogout, setConfirmLogout] = useState(false);
 	const [selectedIdToDelete, setSelectedIdToDelete] = useState<number | null>(
@@ -43,7 +44,7 @@ export default function AgendasPage(): React.JSX.Element {
 				const data = await getAppointments();
 				setAgendas(Array.isArray(data.appointments) ? data.appointments : []);
 			} catch (err) {
-				console.error('Error al cargar agendas:', err);
+				setToast({ message: 'Error al cargar agendas', type: 'error' });
 			} finally {
 				setLoading(false);
 			}
@@ -65,14 +66,18 @@ export default function AgendasPage(): React.JSX.Element {
 
 	const handleConfirmedDelete = async () => {
 		if (selectedIdToDelete !== null) {
+			setToast({ message: 'Eliminando...', type: 'info' });
 			try {
 				await deleteOwnAppointment(selectedIdToDelete);
 				setAgendas((prev) =>
 					prev.filter((agenda) => agenda.id !== selectedIdToDelete)
 				);
-				setShowNotification(true);
-			} catch (err) {
-				console.error('Error al eliminar la agenda:', err);
+				setToast({ message: 'Agenda eliminada', type: 'success' });
+			} catch (err: any) {
+				setToast({
+					message: err.response?.data?.msg || 'Error al eliminar agenda',
+					type: 'error',
+				});
 			} finally {
 				setConfirmDeleteOpen(false);
 				setSelectedIdToDelete(null);
@@ -114,11 +119,11 @@ export default function AgendasPage(): React.JSX.Element {
 			if (!isValidDate || !isValidHour || !values.gender || !values.service)
 				return;
 
-			try {
-				const formattedDate = format(dateTime, 'dd/MM/yyyy HH:mm');
+			const formattedDate = format(dateTime, 'dd/MM/yyyy HH:mm');
 
+			try {
 				if (editingAgenda) {
-					// MODO EDITAR
+					setToast({ message: 'Editando agenda...', type: 'info' });
 					const updated = await updateOwnAppointment(editingAgenda.id, {
 						...values,
 						dateTime: formattedDate as unknown as Date,
@@ -128,22 +133,26 @@ export default function AgendasPage(): React.JSX.Element {
 							item.id === editingAgenda.id ? updated.appointment : item
 						)
 					);
+					setToast({ message: 'Agenda actualizada', type: 'success' });
 				} else {
-					// MODO CREAR
+					setToast({ message: 'Creando agenda...', type: 'info' });
 					const created = await createAppointment({
 						...values,
 						dateTime: formattedDate as unknown as Date,
 					});
 					setAgendas((prev) => [created.appointment, ...prev]);
+					setToast({ message: 'Agenda creada con éxito', type: 'success' });
 				}
-
 				resetModal();
-				setShowNotification(true);
-			} catch (err) {
-				console.error('Error al guardar agenda:', err);
+			} catch (err: any) {
+				setToast({
+					message: err.response?.data?.msg || 'Error al guardar agenda',
+					type: 'error',
+				});
 			}
 		},
 	});
+
 	const openEditModal = (agenda: Agenda) => {
 		setEditingAgenda(agenda);
 		setDateTime(new Date(agenda.dateTime));
@@ -154,6 +163,7 @@ export default function AgendasPage(): React.JSX.Element {
 			service: agenda.service,
 		});
 	};
+
 	const logout = () => {
 		useAuthStore.getState().logout();
 		navigate('/');
@@ -161,10 +171,11 @@ export default function AgendasPage(): React.JSX.Element {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-[#fef9f9] via-[#f2f2ff] to-[#d9e8ff] py-12 px-4 sm:px-6 lg:px-8">
-			{showNotification && (
+			{toast && (
 				<Notification
-					message="Operación realizada exitosamente"
-					onClose={() => setShowNotification(false)}
+					message={toast.message}
+					onClose={() => setToast(null)}
+					type={toast.type}
 				/>
 			)}
 
@@ -216,7 +227,6 @@ export default function AgendasPage(): React.JSX.Element {
 				)}
 			</div>
 
-			{/* Confirmación para eliminar */}
 			<ConfirmModal
 				isOpen={confirmDeleteOpen}
 				title="¿Estás seguro de eliminar esta cita?"
@@ -226,7 +236,7 @@ export default function AgendasPage(): React.JSX.Element {
 				confirmText="Eliminar"
 				cancelText="Cancelar"
 			/>
-			{/* Confirmación para cerrar sesión */}
+
 			<ConfirmModal
 				isOpen={confirmLogout}
 				title="¿Estás seguro de cerrar sesión?"
@@ -236,7 +246,7 @@ export default function AgendasPage(): React.JSX.Element {
 				confirmText="Eliminar"
 				cancelText="Cancelar"
 			/>
-			{/* Modal para crear nueva agenda */}
+
 			<AgendaModal
 				isOpen={showModal}
 				onClose={resetModal}
