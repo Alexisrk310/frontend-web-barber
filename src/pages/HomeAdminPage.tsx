@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { PlusCircleIcon, ScissorsIcon, LogOut } from 'lucide-react';
+import {
+	PlusCircleIcon,
+	ScissorsIcon,
+	LogOut,
+	MoveLeftIcon,
+	ArrowLeft,
+} from 'lucide-react';
 import 'react-day-picker/dist/style.css';
 import { useApi } from '../hooks/useApi';
 import { useFormik } from 'formik';
@@ -13,7 +19,7 @@ import AgendaModal from '@/components/AgendaModal';
 import AgendaCard from '@/components/AgendaCard';
 import { Agenda } from '@/interfaces/appointments.Interface';
 
-export default function AgendasPage(): React.JSX.Element {
+export default function HomeAdminPage(): React.JSX.Element {
 	const [agendas, setAgendas] = useState<Agenda[]>([]);
 	const [showModal, setShowModal] = useState(false);
 	const [dateTime, setDateTime] = useState<Date | null>(null);
@@ -31,17 +37,13 @@ export default function AgendasPage(): React.JSX.Element {
 		null
 	);
 	const navigate = useNavigate();
-	const {
-		getAppointments,
-		createAppointment,
-		deleteOwnAppointment,
-		updateOwnAppointment,
-	} = useApi();
-	const { user } = useAuthStore();
+	const { getAllAppointments, adminUpdateAppointment, adminDeleteAppointment } =
+		useApi();
+
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const data = await getAppointments();
+				const data = await getAllAppointments();
 				setAgendas(Array.isArray(data.appointments) ? data.appointments : []);
 			} catch (err) {
 				setToast({ message: 'Error al cargar agendas', type: 'error' });
@@ -68,7 +70,7 @@ export default function AgendasPage(): React.JSX.Element {
 		if (selectedIdToDelete !== null) {
 			setToast({ message: 'Eliminando...', type: 'info' });
 			try {
-				const res = await deleteOwnAppointment(selectedIdToDelete);
+				const res = await adminDeleteAppointment(selectedIdToDelete);
 				setAgendas((prev) =>
 					prev.filter((agenda) => agenda.id !== selectedIdToDelete)
 				);
@@ -102,11 +104,12 @@ export default function AgendasPage(): React.JSX.Element {
 			name: '',
 			gender: '',
 			service: '',
+			status: '',
 		},
 		validationSchema: Yup.object({
-			name: Yup.string().optional(),
 			gender: Yup.string().required('Género requerido'),
 			service: Yup.string().required('Servicio requerido'),
+			status: Yup.string().required('Estado requerido'),
 		}),
 		onSubmit: async (values) => {
 			setDateTouched(true);
@@ -119,15 +122,14 @@ export default function AgendasPage(): React.JSX.Element {
 				dateTime.getHours() >= 8 &&
 				dateTime.getHours() <= 17;
 
-			if (!isValidDate || !isValidHour || !values.gender || !values.service)
-				return;
+			if (!isValidDate || !isValidHour) return;
 
 			try {
 				if (editingAgenda) {
 					setToast({ message: 'Editando agenda...', type: 'info' });
-					const updated = await updateOwnAppointment(editingAgenda.id, {
+					const updated = await adminUpdateAppointment(editingAgenda.id, {
 						...values,
-						dateTime: dateTime!, // ✅ Usa el objeto Date directamente
+						dateTime: dateTime!,
 					});
 					setAgendas((prev) =>
 						prev.map((item) =>
@@ -138,19 +140,8 @@ export default function AgendasPage(): React.JSX.Element {
 						message: updated?.message || 'Agenda actualizada',
 						type: 'success',
 					});
-				} else {
-					setToast({ message: 'Creando agenda...', type: 'info' });
-					const created = await createAppointment({
-						...values,
-						dateTime: dateTime!, // ✅ Usa el objeto Date directamente
-					});
-					setAgendas((prev) => [created.appointment, ...prev]);
-					setToast({
-						message: created?.message || 'Agenda creada con éxito',
-						type: 'success',
-					});
+					resetModal();
 				}
-				resetModal();
 			} catch (err: any) {
 				setToast({
 					message: err.response?.data?.message || 'Error al guardar agenda',
@@ -168,6 +159,7 @@ export default function AgendasPage(): React.JSX.Element {
 			name: agenda.name || '',
 			gender: agenda.gender,
 			service: agenda.service,
+			status: agenda.status,
 		});
 	};
 
@@ -189,22 +181,16 @@ export default function AgendasPage(): React.JSX.Element {
 			<div className="max-w-7xl mx-auto">
 				<div className="flex justify-between items-center mb-10">
 					<h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-black via-gray-800 to-black text-transparent bg-clip-text">
-						Mis Agendas
+						Panel Admin - Agendas
 					</h1>
-					<div className="flex gap-4 items-center">
-						<button
-							onClick={() => setShowModal(true)}
-							className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-black to-gray-700 text-white rounded-lg shadow hover:brightness-110">
-							<PlusCircleIcon className="w-5 h-5" />
-							Agregar Agenda
-						</button>
-						{user?.role === 'admin' && (
-							<button
-								onClick={() => navigate('/agendas/all')}
-								className="px-4 py-2 bg-gradient-to-r from-black to-gray-700 text-white rounded-lg shadow hover:brightness-110">
-								Ver Todas las Agendas
-							</button>
-						)}
+					<div className="flex items-center gap-10">
+						<div
+							className="flex items-center gap-2 cursor-pointer"
+							onClick={() => navigate('/inicio')}>
+							<ArrowLeft className="cursor-pointer" />
+							<span>Regresar</span>
+						</div>
+
 						<LogOut
 							onClick={() => setConfirmLogout(true)}
 							className="cursor-pointer"
@@ -221,11 +207,8 @@ export default function AgendasPage(): React.JSX.Element {
 							<div className="absolute bottom-0 w-20 h-2 bg-black/10 rounded-full blur-sm animate-pulse" />
 						</div>
 						<p className="mt-6 text-2xl font-semibold text-gray-700 tracking-wide animate-pulse">
-							Cargando tu estilo...
+							Cargando agendas...
 						</p>
-						<span className="mt-2 text-sm text-gray-500 italic">
-							Barbería con clase y precisión
-						</span>
 					</div>
 				) : (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -257,7 +240,7 @@ export default function AgendasPage(): React.JSX.Element {
 				description="Esta acción te llevará a la página de inicio."
 				onCancel={() => setConfirmLogout(false)}
 				onConfirm={logout}
-				confirmText="Eliminar"
+				confirmText="Cerrar sesión"
 				cancelText="Cancelar"
 			/>
 

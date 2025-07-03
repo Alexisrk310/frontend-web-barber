@@ -126,6 +126,23 @@ export const useApi = () => {
 		setAuth(response.data.user, response.data.token);
 		return response.data;
 	};
+	const getAllAppointments = async () => {
+		const response = await api.get('/api/appointments/all', {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		});
+		return response.data;
+	};
+
+	const adminDeleteAppointment = async (id: number) => {
+		const response = await api.delete(`/api/${id}`, {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		});
+		return response.data;
+	};
 
 	return {
 		login,
@@ -133,8 +150,10 @@ export const useApi = () => {
 		createAppointment,
 		deleteOwnAppointment,
 		getAppointments,
+		getAllAppointments, // <- admin
 		updateOwnAppointment,
-		adminUpdateAppointment,
+		adminUpdateAppointment, // <- admin
+		adminDeleteAppointment, // <- admin
 		loginWithGoogle,
 	};
 };
