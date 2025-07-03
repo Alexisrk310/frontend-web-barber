@@ -124,40 +124,40 @@ export default function SignInPage(): React.JSX.Element {
 								)}
 							</div>
 						</div>
+						<div className="*:my-4">
+							<button
+								type="submit"
+								className="w-full py-3 bg-gradient-to-r from-black via-neutral-800 to-gray-700 text-white font-semibold rounded-lg shadow-lg hover:brightness-110 transition duration-300">
+								Entrar
+							</button>
+							<GoogleLogin
+								onSuccess={async (credentialResponse) => {
+									if (!credentialResponse.credential) return;
 
-						<button
-							type="submit"
-							className="w-full py-3 bg-gradient-to-r from-black via-neutral-800 to-gray-700 text-white font-semibold rounded-lg shadow-lg hover:brightness-110 transition duration-300">
-							Entrar
-						</button>
-						<GoogleLogin
-							onSuccess={async (credentialResponse) => {
-								if (!credentialResponse.credential) return;
-
-								try {
-									await loginWithGoogle(credentialResponse.credential);
+									try {
+										await loginWithGoogle(credentialResponse.credential);
+										setToast({
+											message: 'Inicio de sesión con Google exitoso',
+											type: 'success',
+										});
+										setTimeout(() => navigate('/inicio'), 1500);
+									} catch (error: any) {
+										setToast({
+											message:
+												error?.response?.data?.msg ||
+												'Error al iniciar sesión con Google',
+											type: 'error',
+										});
+									}
+								}}
+								onError={() => {
 									setToast({
-										message: 'Inicio de sesión con Google exitoso',
-										type: 'success',
-									});
-									setTimeout(() => navigate('/inicio'), 1500);
-								} catch (error: any) {
-									setToast({
-										message:
-											error?.response?.data?.msg ||
-											'Error al iniciar sesión con Google',
+										message: 'Error al iniciar sesión con Google',
 										type: 'error',
 									});
-								}
-							}}
-							onError={() => {
-								setToast({
-									message: 'Error al iniciar sesión con Google',
-									type: 'error',
-								});
-							}}
-						/>
-
+								}}
+							/>
+						</div>
 						<div className="text-center">
 							<button
 								type="button"
