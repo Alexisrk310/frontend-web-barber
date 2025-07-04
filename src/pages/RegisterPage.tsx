@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
-
 import { useApi } from '../hooks/useApi';
-import { useAuthStore } from '@/store/useAuthStore';
-import Notification from '@/components/Notification'; // Asegúrate de que este path sea correcto
+import Notification from '@/components/Notification';
 
 interface RegisterFormValues {
 	name: string;
@@ -21,6 +19,14 @@ export default function RegisterPage(): React.JSX.Element {
 		message: string;
 		type: 'success' | 'error' | 'info' | 'warning';
 	} | null>(null);
+
+	// Ocultar automáticamente el toast solo cuando no sea tipo 'info'
+	useEffect(() => {
+		if (toast && toast.type !== 'info') {
+			const timeout = setTimeout(() => setToast(null), 3000);
+			return () => clearTimeout(timeout);
+		}
+	}, [toast]);
 
 	const formik = useFormik<RegisterFormValues>({
 		initialValues: {
@@ -42,7 +48,6 @@ export default function RegisterPage(): React.JSX.Element {
 
 			try {
 				await register(values);
-
 				setToast({ message: 'Registro exitoso', type: 'success' });
 
 				setTimeout(() => {
@@ -66,7 +71,9 @@ export default function RegisterPage(): React.JSX.Element {
 				<Notification
 					message={toast.message}
 					type={toast.type}
-					onClose={() => setToast(null)}
+					onClose={() => {
+						if (toast.type !== 'info') setToast(null);
+					}}
 				/>
 			)}
 

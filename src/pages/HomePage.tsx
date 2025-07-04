@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { format } from 'date-fns';
-import { PlusCircleIcon, ScissorsIcon, LogOut } from 'lucide-react';
+'use client';
+
+import type React from 'react';
+import { useEffect, useState } from 'react';
+import { PlusCircleIcon, ScissorsIcon, LogOut, Sparkles } from 'lucide-react';
 import 'react-day-picker/dist/style.css';
 import { useApi } from '../hooks/useApi';
 import { useFormik } from 'formik';
@@ -11,7 +13,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import Notification from '@/components/Notification';
 import AgendaModal from '@/components/AgendaModal';
 import AgendaCard from '@/components/AgendaCard';
-import { Agenda } from '@/interfaces/appointments.Interface';
+import type { Agenda } from '@/interfaces/appointments.Interface';
 
 export default function AgendasPage(): React.JSX.Element {
 	const [agendas, setAgendas] = useState<Agenda[]>([]);
@@ -30,6 +32,7 @@ export default function AgendasPage(): React.JSX.Element {
 	const [selectedIdToDelete, setSelectedIdToDelete] = useState<number | null>(
 		null
 	);
+
 	const navigate = useNavigate();
 	const {
 		getAppointments,
@@ -38,6 +41,15 @@ export default function AgendasPage(): React.JSX.Element {
 		updateOwnAppointment,
 	} = useApi();
 	const { user } = useAuthStore();
+
+	// ✅ Ocultar automáticamente el toast si no es tipo 'info'
+	useEffect(() => {
+		if (toast && toast.type !== 'info') {
+			const timeout = setTimeout(() => setToast(null), 3000);
+			return () => clearTimeout(timeout);
+		}
+	}, [toast]);
+
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
@@ -49,6 +61,7 @@ export default function AgendasPage(): React.JSX.Element {
 				setLoading(false);
 			}
 		};
+
 		fetchData();
 	}, []);
 
@@ -111,7 +124,6 @@ export default function AgendasPage(): React.JSX.Element {
 		onSubmit: async (values) => {
 			setDateTouched(true);
 			setHourTouched(true);
-
 			const isValidDate = !!dateTime;
 			const isValidHour =
 				dateTime instanceof Date &&
@@ -127,7 +139,7 @@ export default function AgendasPage(): React.JSX.Element {
 					setToast({ message: 'Editando agenda...', type: 'info' });
 					const updated = await updateOwnAppointment(editingAgenda.id, {
 						...values,
-						dateTime: dateTime!, // ✅ Usa el objeto Date directamente
+						dateTime: dateTime!,
 					});
 					setAgendas((prev) =>
 						prev.map((item) =>
@@ -142,7 +154,7 @@ export default function AgendasPage(): React.JSX.Element {
 					setToast({ message: 'Creando agenda...', type: 'info' });
 					const created = await createAppointment({
 						...values,
-						dateTime: dateTime!, // ✅ Usa el objeto Date directamente
+						dateTime: dateTime!,
 					});
 					setAgendas((prev) => [created.appointment, ...prev]);
 					setToast({
@@ -177,58 +189,101 @@ export default function AgendasPage(): React.JSX.Element {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-[#fef9f9] via-[#f2f2ff] to-[#d9e8ff] py-12 px-4 sm:px-6 lg:px-8">
+		<div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black py-12 px-4 sm:px-6 lg:px-8">
+			{/* Efectos de fondo */}
+			<div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
+			<div className="fixed inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.02)_50%,transparent_75%)] pointer-events-none" />
+
 			{toast && (
 				<Notification
 					message={toast.message}
-					onClose={() => setToast(null)}
 					type={toast.type}
+					onClose={() => {
+						if (toast.type !== 'info') setToast(null);
+					}}
 				/>
 			)}
 
-			<div className="max-w-7xl mx-auto">
-				<div className="flex justify-between items-center mb-10">
-					<h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-black via-gray-800 to-black text-transparent bg-clip-text">
-						Mis Agendas
-					</h1>
-					<div className="flex gap-4 items-center">
+			<div className="max-w-7xl mx-auto relative z-10">
+				{/* Header */}
+				<div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-12 gap-6">
+					<div className="flex items-center gap-4">
+						<div className="relative">
+							<div className="w-16 h-16 bg-gradient-to-br from-white to-gray-300 rounded-full flex items-center justify-center shadow-2xl">
+								<ScissorsIcon className="w-8 h-8 text-black" />
+							</div>
+							<div className="absolute -inset-2 bg-gradient-to-r from-white/20 to-transparent rounded-full blur-lg" />
+						</div>
+						<div>
+							<h1 className="text-5xl lg:text-6xl font-black tracking-tight">
+								<span className="bg-gradient-to-r text-white bg-clip-text">
+									Mis Agendas
+								</span>
+							</h1>
+							<p className="text-gray-400 text-lg mt-2 flex items-center gap-2">
+								<Sparkles className="w-5 h-5" />
+								Barbería Premium
+							</p>
+						</div>
+					</div>
+
+					<div className="flex flex-wrap gap-3 items-center">
 						<button
 							onClick={() => setShowModal(true)}
-							className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-black to-gray-700 text-white rounded-lg shadow hover:brightness-110">
+							className="bg-gradient-to-r from-white to-gray-200 text-black hover:from-gray-200 hover:to-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2">
 							<PlusCircleIcon className="w-5 h-5" />
 							Agregar Agenda
 						</button>
+
 						{user?.role === 'admin' && (
 							<button
 								onClick={() => navigate('/agendas/all')}
-								className="px-4 py-2 bg-gradient-to-r from-black to-gray-700 text-white rounded-lg shadow hover:brightness-110">
+								className="border border-gray-600 text-white hover:bg-white/10 px-6 py-3 rounded-xl transition-all duration-300 bg-transparent">
 								Ver Todas las Agendas
 							</button>
 						)}
-						<LogOut
+
+						<button
 							onClick={() => setConfirmLogout(true)}
-							className="cursor-pointer"
-						/>
+							className="text-gray-400 hover:text-white hover:bg-red-500/20 p-3 rounded-xl transition-all duration-300">
+							<LogOut className="w-5 h-5 text-red-500" />
+						</button>
 					</div>
 				</div>
 
+				{/* Contenido principal */}
 				{loading ? (
-					<div className="flex flex-col items-center justify-center h-[80vh]">
-						<div className="relative flex items-center justify-center">
-							<div className="w-24 h-24 rounded-full bg-white shadow-xl flex items-center justify-center border border-gray-300 animate-bounce">
-								<ScissorsIcon className="w-10 h-10 text-black" />
+					<div className="flex flex-col items-center justify-center h-[70vh]">
+						<div className="relative">
+							<div className="w-32 h-32 rounded-full bg-gradient-to-r from-gray-800 via-black to-gray-800 flex items-center justify-center border-2 border-gray-600 shadow-2xl animate-spin">
+								<div className="w-24 h-24 rounded-full bg-gradient-to-r from-white via-gray-200 to-white flex items-center justify-center">
+									<ScissorsIcon className="w-12 h-12 text-black animate-pulse" />
+								</div>
 							</div>
-							<div className="absolute bottom-0 w-20 h-2 bg-black/10 rounded-full blur-sm animate-pulse" />
+							<div className="absolute -inset-4 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-full blur-xl animate-pulse" />
+							<div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-4 bg-black/30 rounded-full blur-lg" />
 						</div>
-						<p className="mt-6 text-2xl font-semibold text-gray-700 tracking-wide animate-pulse">
-							Cargando tu estilo...
-						</p>
-						<span className="mt-2 text-sm text-gray-500 italic">
-							Barbería con clase y precisión
-						</span>
+
+						<div className="mt-8 text-center">
+							<h3 className="text-3xl font-bold text-white mb-2 animate-pulse">
+								Cargando tu estilo...
+							</h3>
+							<p className="text-gray-400 text-lg italic">
+								Barbería con clase y precisión
+							</p>
+							<div className="flex items-center justify-center gap-1 mt-4">
+								{[...Array(3)].map((_, i) => (
+									<div
+										key={i}
+										className="w-2 h-2 bg-white rounded-full animate-bounce"
+										style={{ animationDelay: `${i * 0.2}s` }}
+									/>
+								))}
+							</div>
+						</div>
 					</div>
-				) : (
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+				) : agendas.length > 0 ? (
+					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
 						{agendas.map((agenda) => (
 							<AgendaCard
 								key={agenda.id}
@@ -237,6 +292,24 @@ export default function AgendasPage(): React.JSX.Element {
 								onDelete={confirmDelete}
 							/>
 						))}
+					</div>
+				) : (
+					<div className="text-center py-16">
+						<div className="w-24 h-24 bg-gradient-to-r from-gray-800 to-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+							<ScissorsIcon className="w-12 h-12 text-gray-400" />
+						</div>
+						<h3 className="text-2xl font-bold text-white mb-2">
+							No hay citas programadas
+						</h3>
+						<p className="text-gray-400 mb-6">
+							Comienza agregando tu primera cita
+						</p>
+						<button
+							onClick={() => setShowModal(true)}
+							className="bg-gradient-to-r from-white to-gray-200 text-black hover:from-gray-200 hover:to-white font-semibold px-6 py-3 rounded-xl">
+							<PlusCircleIcon className="w-5 h-5 mr-2 inline" />
+							Agregar Primera Cita
+						</button>
 					</div>
 				)}
 			</div>
@@ -257,7 +330,7 @@ export default function AgendasPage(): React.JSX.Element {
 				description="Esta acción te llevará a la página de inicio."
 				onCancel={() => setConfirmLogout(false)}
 				onConfirm={logout}
-				confirmText="Eliminar"
+				confirmText="Cerrar sesión"
 				cancelText="Cancelar"
 			/>
 

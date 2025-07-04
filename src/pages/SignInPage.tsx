@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../hooks/useApi';
-import { useAuthStore } from '@/store/useAuthStore';
 import Notification from '@/components/Notification';
 import { GoogleLogin } from '@react-oauth/google';
 
@@ -20,6 +19,14 @@ export default function SignInPage(): React.JSX.Element {
 		type: 'success' | 'error' | 'info' | 'warning';
 	} | null>(null);
 
+	// Ocultar el toast automáticamente solo si no es "Cargando..."
+	useEffect(() => {
+		if (toast && toast.type !== 'info') {
+			const timeout = setTimeout(() => setToast(null), 3000);
+			return () => clearTimeout(timeout);
+		}
+	}, [toast]);
+
 	const formik = useFormik<SignInFormValues>({
 		initialValues: {
 			email: '',
@@ -32,16 +39,11 @@ export default function SignInPage(): React.JSX.Element {
 				.required('Contraseña requerida'),
 		}),
 		onSubmit: async (values, { resetForm }) => {
-			// Primero mostramos "Cargando..."
 			setToast({ message: 'Cargando...', type: 'info' });
 
 			try {
 				await login(values.email, values.password);
-
-				// Cambiamos el toast a success (verde)
 				setToast({ message: 'Inicio de sesión exitoso', type: 'success' });
-
-				// Esperamos un poco antes de redirigir
 				setTimeout(() => {
 					navigate('/inicio');
 				}, 1500);
@@ -63,7 +65,10 @@ export default function SignInPage(): React.JSX.Element {
 				<Notification
 					message={toast.message}
 					type={toast.type}
-					onClose={() => setToast(null)}
+					onClose={() => {
+						// Solo permite cerrar si no está cargando
+						if (toast.type !== 'info') setToast(null);
+					}}
 				/>
 			)}
 
@@ -124,15 +129,19 @@ export default function SignInPage(): React.JSX.Element {
 								)}
 							</div>
 						</div>
+
 						<div className="flex flex-col items-center space-y-4">
 							<button
 								type="submit"
 								className="w-full py-3 bg-gradient-to-r from-black via-neutral-800 to-gray-700 text-white font-semibold rounded-lg shadow-lg hover:brightness-110 transition duration-300">
 								Entrar
 							</button>
+
 							<GoogleLogin
 								onSuccess={async (credentialResponse) => {
 									if (!credentialResponse.credential) return;
+
+									setToast({ message: 'Cargando...', type: 'info' });
 
 									try {
 										await loginWithGoogle(credentialResponse.credential);
@@ -158,6 +167,7 @@ export default function SignInPage(): React.JSX.Element {
 								}}
 							/>
 						</div>
+
 						<div className="text-center">
 							<button
 								type="button"

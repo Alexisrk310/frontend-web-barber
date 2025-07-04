@@ -15,7 +15,6 @@ export const useApi = () => {
 	const login = async (email: string, password: string) => {
 		const response = await api.post('/auth/login', { email, password });
 		// Guardar en la store de Zustand
-		// Guardar en la store de Zustand
 
 		setAuth(response.data.user, response.data.token);
 
@@ -82,6 +81,14 @@ export const useApi = () => {
 				},
 			}
 		);
+		return response.data;
+	};
+	const getAppointmentStats = async () => {
+		const response = await api.get('/api/stats', {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		});
 		return response.data;
 	};
 
@@ -153,6 +160,7 @@ export const useApi = () => {
 		getAllAppointments, // <- admin
 		updateOwnAppointment,
 		adminUpdateAppointment, // <- admin
+		getAppointmentStats, // <- admin
 		adminDeleteAppointment, // <- admin
 		loginWithGoogle,
 	};

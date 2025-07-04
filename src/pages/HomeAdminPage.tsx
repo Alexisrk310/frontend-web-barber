@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { format } from 'date-fns';
+'use client';
+
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import {
-	PlusCircleIcon,
 	ScissorsIcon,
 	LogOut,
-	MoveLeftIcon,
 	ArrowLeft,
+	Calendar,
+	Clock,
+	User,
 } from 'lucide-react';
 import 'react-day-picker/dist/style.css';
 import { useApi } from '../hooks/useApi';
@@ -17,7 +20,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import Notification from '@/components/Notification';
 import AgendaModal from '@/components/AgendaModal';
 import AgendaCard from '@/components/AgendaCard';
-import { Agenda } from '@/interfaces/appointments.Interface';
+import type { Agenda } from '@/interfaces/appointments.Interface';
 
 export default function HomeAdminPage(): React.JSX.Element {
 	const [agendas, setAgendas] = useState<Agenda[]>([]);
@@ -37,8 +40,26 @@ export default function HomeAdminPage(): React.JSX.Element {
 		null
 	);
 	const navigate = useNavigate();
-	const { getAllAppointments, adminUpdateAppointment, adminDeleteAppointment } =
-		useApi();
+	const [stats, setStats] = useState<{
+		todayAppointments: number;
+		weekAppointments: number;
+		activeClientsCount: number;
+	} | null>(null);
+
+	const {
+		getAllAppointments,
+		adminUpdateAppointment,
+		adminDeleteAppointment,
+		getAppointmentStats,
+	} = useApi();
+
+	// ✅ Cierra automáticamente el toast si no es 'info'
+	useEffect(() => {
+		if (toast && toast.type !== 'info') {
+			const timeout = setTimeout(() => setToast(null), 3000);
+			return () => clearTimeout(timeout);
+		}
+	}, [toast]);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -51,6 +72,7 @@ export default function HomeAdminPage(): React.JSX.Element {
 				setLoading(false);
 			}
 		};
+
 		fetchData();
 	}, []);
 
@@ -65,6 +87,28 @@ export default function HomeAdminPage(): React.JSX.Element {
 		setSelectedIdToDelete(id);
 		setConfirmDeleteOpen(true);
 	};
+
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const [data, statsData] = await Promise.all([
+					getAllAppointments(),
+					getAppointmentStats(),
+				]);
+				setAgendas(Array.isArray(data.appointments) ? data.appointments : []);
+				setStats(statsData);
+			} catch (err) {
+				setToast({
+					message: 'Error al cargar agendas o estadísticas',
+					type: 'error',
+				});
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchData();
+	}, []);
 
 	const handleConfirmedDelete = async () => {
 		if (selectedIdToDelete !== null) {
@@ -114,7 +158,6 @@ export default function HomeAdminPage(): React.JSX.Element {
 		onSubmit: async (values) => {
 			setDateTouched(true);
 			setHourTouched(true);
-
 			const isValidDate = !!dateTime;
 			const isValidHour =
 				dateTime instanceof Date &&
@@ -169,44 +212,92 @@ export default function HomeAdminPage(): React.JSX.Element {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-[#fef9f9] via-[#f2f2ff] to-[#d9e8ff] py-12 px-4 sm:px-6 lg:px-8">
+		<div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black py-12 px-4 sm:px-6 lg:px-8">
 			{toast && (
 				<Notification
 					message={toast.message}
-					onClose={() => setToast(null)}
 					type={toast.type}
+					onClose={() => {
+						if (toast.type !== 'info') setToast(null);
+					}}
 				/>
 			)}
-
+			{/* Efectos de fondo */}
+			<div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
+			<div className="fixed inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.02)_50%,transparent_75%)] pointer-events-none" />
 			<div className="max-w-7xl mx-auto">
 				<div className="flex justify-between items-center mb-10">
-					<h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-black via-gray-800 to-black text-transparent bg-clip-text">
-						Panel Admin - Agendas
-					</h1>
-					<div className="flex items-center gap-10">
+					<div className="flex items-center gap-4">
+						<div className="w-16 h-16 bg-gradient-to-br from-white to-gray-300 rounded-full flex items-center justify-center shadow-xl">
+							<ScissorsIcon className="w-8 h-8 text-black" />
+						</div>
+						<h1 className="text-5xl font-extrabold tracking-tight text-white bg-clip-text">
+							Panel Admin - Agendas
+						</h1>
+					</div>
+
+					<div className="flex items-center gap-4">
 						<div
-							className="flex items-center gap-2 cursor-pointer"
+							className="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-gray-800"
 							onClick={() => navigate('/inicio')}>
-							<ArrowLeft className="cursor-pointer" />
+							<ArrowLeft className="w-5 h-5" />
 							<span>Regresar</span>
 						</div>
-
-						<LogOut
+						<button
 							onClick={() => setConfirmLogout(true)}
-							className="cursor-pointer"
-						/>
+							className="text-gray-400 hover:text-white hover:bg-red-500/20 p-3 rounded-xl transition-all duration-300">
+							<LogOut className="w-5 h-5 text-red-500" />
+						</button>
 					</div>
 				</div>
+
+				{stats && (
+					<div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
+						<div className="bg-gradient-to-br from-gray-900 to-black border border-gray-700 rounded-xl shadow-xl p-6">
+							<div className="flex items-center justify-between">
+								<div>
+									<p className="text-gray-400 text-sm">Citas de hoy</p>
+									<h2 className="text-3xl font-bold text-white">
+										{stats.todayAppointments}
+									</h2>
+								</div>
+								<Calendar className="w-8 h-8 text-gray-500" />
+							</div>
+						</div>
+						<div className="bg-gradient-to-br from-gray-900 to-black border border-gray-700 rounded-xl shadow-xl p-6">
+							<div className="flex items-center justify-between">
+								<div>
+									<p className="text-gray-400 text-sm">Citas de la semana</p>
+									<h2 className="text-3xl font-bold text-white">
+										{stats.weekAppointments}
+									</h2>
+								</div>
+								<Clock className="w-8 h-8 text-gray-500" />
+							</div>
+						</div>
+						<div className="bg-gradient-to-br from-gray-900 to-black border border-gray-700 rounded-xl shadow-xl p-6">
+							<div className="flex items-center justify-between">
+								<div>
+									<p className="text-gray-400 text-sm">Clientes activos</p>
+									<h2 className="text-3xl font-bold text-white">
+										{stats.activeClientsCount}
+									</h2>
+								</div>
+								<User className="w-8 h-8 text-gray-500" />
+							</div>
+						</div>
+					</div>
+				)}
 
 				{loading ? (
 					<div className="flex flex-col items-center justify-center h-[80vh]">
 						<div className="relative flex items-center justify-center">
-							<div className="w-24 h-24 rounded-full bg-white shadow-xl flex items-center justify-center border border-gray-300 animate-bounce">
+							<div className="w-24 h-24 rounded-full bg-gradient-to-br from-white to-gray-400 shadow-xl flex items-center justify-center border border-gray-300 animate-bounce">
 								<ScissorsIcon className="w-10 h-10 text-black" />
 							</div>
 							<div className="absolute bottom-0 w-20 h-2 bg-black/10 rounded-full blur-sm animate-pulse" />
 						</div>
-						<p className="mt-6 text-2xl font-semibold text-gray-700 tracking-wide animate-pulse">
+						<p className="mt-6 text-2xl font-semibold text-white tracking-wide animate-pulse">
 							Cargando agendas...
 						</p>
 					</div>
