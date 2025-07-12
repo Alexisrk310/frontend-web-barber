@@ -22,9 +22,19 @@ export default function AgendaCard({
 	// Función para obtener el color del estado
 	const getStatusColor = (status: string) => {
 		const normalizedStatus = status.toLowerCase();
-		if (normalizedStatus === 'pendiente') return 'text-blue-400';
-		if (normalizedStatus === 'activo') return 'text-green-400';
-		return 'text-gray-400';
+
+		switch (normalizedStatus) {
+			case 'pendiente':
+				return 'text-yellow-500'; // amarillo cálido
+			case 'confirmado':
+				return 'text-blue-500'; // azul fuerte
+			case 'en curso':
+				return 'text-emerald-500'; // verde moderno
+			case 'completado':
+				return 'text-gray-300'; // gris claro (tipo desactivado)
+			default:
+				return 'text-gray-400';
+		}
 	};
 
 	return (
@@ -101,7 +111,7 @@ export default function AgendaCard({
 						<div>
 							<p className="text-gray-400 text-xs">Fecha de la cita</p>
 							<p className="text-white font-medium">
-								{format(new Date(agenda.dateTime), 'dd/MM/yyyy HH:mm', {
+								{format(new Date(agenda.dateTime), 'dd/MM/yyyy h:mm a', {
 									locale: es,
 								})}
 							</p>
@@ -113,7 +123,7 @@ export default function AgendaCard({
 						<div>
 							<p className="text-gray-400 text-xs">Creado el</p>
 							<p className="text-gray-300 text-sm">
-								{format(new Date(agenda.createdAt), 'dd/MM/yyyy HH:mm', {
+								{format(new Date(agenda.createdAt), 'dd/MM/yyyy h:mm a', {
 									locale: es,
 								})}
 							</p>
@@ -125,7 +135,7 @@ export default function AgendaCard({
 						<div>
 							<p className="text-gray-400 text-xs">Actualizado el</p>
 							<p className="text-gray-300 text-sm">
-								{format(new Date(agenda.updatedAt), 'dd/MM/yyyy HH:mm', {
+								{format(new Date(agenda.updatedAt), 'dd/MM/yyyy h:mm a', {
 									locale: es,
 								})}
 							</p>
